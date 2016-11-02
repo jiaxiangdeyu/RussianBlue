@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">蓝猫步行记录</string>
+    <string name="length_label">初始步长(m)：</string>
+    <string name="wifi_name">WiFi 信号</string>
+    <string name="accelerometer_name">加速度计</string>
+    <string name="gyroscope_name">陀螺仪</string>
+    <string name="magnetometer_name">磁力计</string>
+    <string name="btn_titlestart">开始</string>
+    <string name="btn_titlestop">停止</string>
+    <string name="file_ok">保存文件成功!</string>
+    <string name="file_error">保存文件出错!</string>
+</resources>

@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">RussianBlue</string>
+    <string name="length_label">Step Length(m):</string>
+    <string name="wifi_name">WiFi RSS</string>
+    <string name="accelerometer_name">Accelerometer</string>
+    <string name="gyroscope_name">Gyroscope</string>
+    <string name="magnetometer_name">Magnetometer</string>
+    <string name="btn_titlestart">Start</string>
+    <string name="btn_titlestop">Stop</string>
+    <string name="file_ok">Save File Success!</string>
+    <string name="file_error">Save File Error!</string>
+</resources>
