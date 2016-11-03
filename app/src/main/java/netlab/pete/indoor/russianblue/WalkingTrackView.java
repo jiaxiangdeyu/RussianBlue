@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -18,16 +19,14 @@ import android.widget.ImageView;
  */
 
 public class WalkingTrackView extends ImageView {
-    public final static float FLT_EPSILON = 0.0000001f;
     public final static int MSG_FOOT_UPDATE = 1;
     public final static int MSG_STEP_UPDATE = 2;
     private final static int COORDINATE_TEXTSIZE = 30;
-    private final static int COORDINATE_STROKEWIDTH = 3;
     private final static int INFORMATION_TEXTSIZE = 45;
-    private final static int TRACK_STROKEWIDTH = 4;
+    private final static int COORDINATE_STROKEWIDTH = 2;
+    private final static int TRACK_STROKEWIDTH = 3;
     private final static float TRACK_MINSCALE = 0.3f;
     private final static float TRACK_MAXSCALE = 3.f;
-
     private final static float MAP_SCALE = 20 / 0.65f;  // (pt/m)
 
     private static float Real2Map(float value) { return  value * MAP_SCALE; }
@@ -35,7 +34,7 @@ public class WalkingTrackView extends ImageView {
     private final static float [] FOOT_SIZES = {16.f, 2.f, 4.f, 4.f, 3.f};
     private final static int [] FOOT_COLORS = {Color.CYAN, Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.BLUE};
 
-    private Paint m_trackPaint;
+    private Paint m_viewPaint;
     private float m_scale;
     private float m_dX;
     private float m_dY;
@@ -49,32 +48,19 @@ public class WalkingTrackView extends ImageView {
     private enum Action_Mode {
         INIT, DRAG, ZOOM
     }
-
     private final class TouchListener implements OnTouchListener {
-
         private Action_Mode m_motionMode = Action_Mode.INIT;
         // Drag and Scale
         private PointF m_startPoint = new PointF();
         private float m_startDistance;
-
         // Variables for drag and scale parameters
         private float m_dX = 0.f;
         private float m_dY = 0.f;
         private float m_scale = 1.f;
-
         private float m_dLastX = 0.f;
         private float m_dLastY = 0.f;
         private float m_lastScale = 1.f;
 
-        /**
-         * Called when a touch event is dispatched to a view. This allows listeners to
-         * get a chance to respond before the target view.
-         *
-         * @param v     The view the touch event has been dispatched to.
-         * @param event The MotionEvent object containing full information about
-         *              the event.
-         * @return True if the listener has consumed the event, false otherwise.
-         */
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
@@ -123,7 +109,6 @@ public class WalkingTrackView extends ImageView {
             float dY = event.getY(1) - event.getY(0);
             return (float) Math.sqrt(dX * dX + dY * dY);
         }
-
     }
 
     private void updateCanvasParameters(float scale, float dX, float dY) {
@@ -168,24 +153,24 @@ public class WalkingTrackView extends ImageView {
     }
     private void initPaint() {
         // Set walking track path style.
-        m_trackPaint = new Paint();
-        m_trackPaint.setColor(Color.BLUE);
-        m_trackPaint.setStrokeWidth(TRACK_STROKEWIDTH);
-        m_trackPaint.setTextSize(INFORMATION_TEXTSIZE);
-        m_trackPaint.setStyle(Paint.Style.STROKE);
+        m_viewPaint = new Paint();
+        m_viewPaint.setColor(Color.BLUE);
+        m_viewPaint.setStrokeWidth(TRACK_STROKEWIDTH);
+        m_viewPaint.setTextSize(INFORMATION_TEXTSIZE);
+        m_viewPaint.setStyle(Paint.Style.STROKE);
     }
-
-    public WalkingTrackView(Context context) {
-        super(context);
-        initPaint();
-        m_walkingPath = new Path();
-        m_walkingPath.moveTo(0.f, 0.f);
-        m_wvHandler = new WalkingViewHandler();
-        m_footColorIndex = 0;
-        m_footLocation = new PointF(0.f, 0.f);
-        m_stepNum = 0;
-        setOnTouchListener(new TouchListener());
-    }
+//
+//    public WalkingTrackView(Context context) {
+//        super(context);
+//        initPaint();
+//        m_walkingPath = new Path();
+//        m_walkingPath.moveTo(0.f, 0.f);
+//        m_wvHandler = new WalkingViewHandler();
+//        m_footColorIndex = 0;
+//        m_footLocation = new PointF(0.f, 0.f);
+//        m_stepNum = 0;
+//        setOnTouchListener(new TouchListener());
+//    }
 
     public WalkingTrackView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -196,6 +181,7 @@ public class WalkingTrackView extends ImageView {
         m_footColorIndex = 0;
         m_footLocation = new PointF(0.f, 0.f);
         m_stepNum = 0;
+        m_scale = 1.f;
         setOnTouchListener(new TouchListener());
     }
 
@@ -214,7 +200,21 @@ public class WalkingTrackView extends ImageView {
     }
 
     public void updateWalkingTrack(float x, float y, int num) {
-        m_walkingPath.lineTo(x, y);
+        x = num * 20;
+        y = num * 20;
+        if (num == 4) {
+            x = 60;
+            y = 60;
+            m_walkingPath.rMoveTo(x,y);
+        }
+        else if (num == 5) {
+            x = 40;
+            y = 40;
+            m_walkingPath.rMoveTo(x, y);
+        }
+        else {
+            m_walkingPath.lineTo(x, y);
+        }
         m_footLocation.set(x, y);
         m_stepNum = num;
         invalidate();
@@ -225,65 +225,68 @@ public class WalkingTrackView extends ImageView {
         int height = getHeight();
         int centerX = width / 2;
         int centerY = height / 2;
-        m_trackPaint.setColor(Color.RED);
-        m_trackPaint.setTextSize(COORDINATE_TEXTSIZE);
-        m_trackPaint.setStrokeWidth(COORDINATE_STROKEWIDTH);
-        m_trackPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        m_viewPaint.setColor(Color.LTGRAY);
+        m_viewPaint.setTextSize(COORDINATE_TEXTSIZE);
+        m_viewPaint.setStrokeWidth(COORDINATE_STROKEWIDTH);
+        m_viewPaint.setStyle(Paint.Style.STROKE);
         canvas.save();
         // View Border
-        m_trackPaint.setStyle(Paint.Style.STROKE);
-        canvas.drawRect(1, 1, width - 1, height - 1, m_trackPaint);
-        m_trackPaint.setStyle(Paint.Style.FILL_AND_STROKE);
-
-        //canvas.translate(m_dX, m_dY);
-
-        // X axis, this is also the West-East axis
-        canvas.drawLine(0, centerY, width, centerY, m_trackPaint);
-        canvas.drawLine(width - 20, centerY - 20, width, centerY, m_trackPaint);
-        canvas.drawLine(width - 20, centerY + 20, width, centerY, m_trackPaint);
-        canvas.drawText("E", width - 30, centerY + 40, m_trackPaint);
-        // Y axis, this is also the South-North axis
-        canvas.drawLine(centerX, 0, centerX, height, m_trackPaint);
-        canvas.drawLine(centerX - 20, 20, centerX, 0, m_trackPaint);
-        canvas.drawLine(centerX + 20, 20, centerX, 0, m_trackPaint);
-        canvas.drawText("N", centerX + 30, 40, m_trackPaint);
+        canvas.drawRect(1, 1, width - 1, height - 1, m_viewPaint);
+        // X axis, this is also the West-East axis, and we considered the translation effect.
+        canvas.drawLine(0, centerY + m_dY, width, centerY + m_dY, m_viewPaint);
+        canvas.drawLine(width - 20, centerY + m_dY - 20, width, centerY + m_dY, m_viewPaint);
+        canvas.drawLine(width - 20, centerY + m_dY + 20, width, centerY + m_dY, m_viewPaint);
+        canvas.drawText("E", width - 30, centerY + m_dY + 40, m_viewPaint);
+        // Y axis, this is also the South-North axis, and we considered the translation effect.
+        canvas.drawLine(centerX + m_dX, 0, centerX + m_dX, height, m_viewPaint);
+        canvas.drawLine(centerX + m_dX - 20, 20, centerX + m_dX, 0, m_viewPaint);
+        canvas.drawLine(centerX + m_dX + 20, 20, centerX + m_dX, 0, m_viewPaint);
+        canvas.drawText("N", centerX + m_dX + 30, 40, m_viewPaint);
         canvas.restore();
-        m_trackPaint.setColor(Color.BLUE);
-        m_trackPaint.setTextSize(INFORMATION_TEXTSIZE);
-        m_trackPaint.setStrokeWidth(TRACK_STROKEWIDTH);
-        m_trackPaint.setStyle(Paint.Style.STROKE);
     }
 
     protected void drawWalkingPath(Canvas canvas) {
         int width = getWidth();
         int height = getHeight();
+        m_viewPaint.setColor(Color.RED);
+        m_viewPaint.setStrokeWidth(TRACK_STROKEWIDTH);
+        m_viewPaint.setStyle(Paint.Style.STROKE);
+        // Draw anti-aliased line
+        m_viewPaint.setAntiAlias(true);
         canvas.save();
-        // Change the coordinate to our painting coordinate.
-        canvas.translate(width / 2, height / 2);
-        canvas.translate(m_dX, m_dY);
+        // Change the coordinate to our painting coordinate and do the translation
+        canvas.translate(width / 2 + m_dX, height / 2 + m_dY);
         canvas.scale(m_scale, m_scale);
-        canvas.drawPath(m_walkingPath, m_trackPaint);
+        //canvas.drawPath(m_walkingPath, m_viewPaint);
+        canvas.drawCircle(m_footLocation.x, m_footLocation.y, FOOT_SIZES[0] / m_scale, m_viewPaint);
         canvas.restore();
     }
 
     protected void drawStepNum(Canvas canvas) {
+        int width = getWidth();
+        m_viewPaint.setColor(Color.BLUE);
+        m_viewPaint.setStrokeWidth(TRACK_STROKEWIDTH);
+        m_viewPaint.setTextSize(INFORMATION_TEXTSIZE);
+        m_viewPaint.setStyle(Paint.Style.STROKE);
+        Rect textBound = new Rect();
+        String informationStr = "Step Number: " + Integer.toString(m_stepNum);
+        m_viewPaint.getTextBounds(informationStr, 0, informationStr.length(), textBound);
         canvas.save();
-
-        canvas.drawText("Step Number: " + Integer.toString(m_stepNum), 50, 100, m_trackPaint);
-
+        canvas.drawText(informationStr, (width - textBound.width()) / 2, (textBound.height() + 10), m_viewPaint);
         canvas.restore();
     }
 
     protected void drawWalkingFoot(Canvas canvas) {
-        m_trackPaint.setColor(FOOT_COLORS[m_footColorIndex]);
+        m_viewPaint.setColor(FOOT_COLORS[m_footColorIndex]);
         int width = getWidth();
         int height = getHeight();
         canvas.save();
         // Change the coordinate to our painting coordinate.
-        canvas.translate(width / 2, height / 2);
-        canvas.drawCircle(m_footLocation.x, m_footLocation.y, FOOT_SIZES[0], m_trackPaint);
+        //canvas.translate(width / 2, height / 2);
+        canvas.translate(width / 2 + m_dX, height / 2 + m_dY);
+        canvas.drawCircle(m_footLocation.x, m_footLocation.y, FOOT_SIZES[0], m_viewPaint);
         canvas.restore();
-        m_trackPaint.setColor(Color.BLUE);
+        m_viewPaint.setColor(Color.BLUE);
     }
 
     @Override
@@ -291,13 +294,31 @@ public class WalkingTrackView extends ImageView {
         drawCoordinates(canvas);
         drawWalkingPath(canvas);
         drawStepNum(canvas);
-        drawWalkingFoot(canvas);
+
+        int width = getWidth();
+        int height = getHeight();
+        m_viewPaint.setColor(Color.RED);
+        m_viewPaint.setStrokeWidth(TRACK_STROKEWIDTH);
+        m_viewPaint.setStyle(Paint.Style.STROKE);
+        // Draw anti-aliased line
+        m_viewPaint.setAntiAlias(true);
+        canvas.save();
+        // Change the coordinate to our painting coordinate and do the translation
+        canvas.translate(width / 2 + m_dX, height / 2 + m_dY);
+        canvas.scale(m_scale, m_scale);
+        canvas.drawPath(m_walkingPath, m_viewPaint);
+        canvas.drawCircle(m_footLocation.x, m_footLocation.y, FOOT_SIZES[0] / m_scale, m_viewPaint);
+        canvas.restore();
+
+
+        //drawStepNum(canvas);
+        //drawWalkingFoot(canvas);
 //        int width = getWidth();
 //        int height = getHeight();
 //        canvas.save();
 //        canvas.translate(m_dX, m_dY);
 //        canvas.scale(m_scale, m_scale);
-//        canvas.drawRect(5, 5, width - 5, height - 5, m_trackPaint);
+//        canvas.drawRect(5, 5, width - 5, height - 5, m_viewPaint);
 //        canvas.restore();
         super.onDraw(canvas);
     }
@@ -306,6 +327,5 @@ public class WalkingTrackView extends ImageView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
-
 
 }
