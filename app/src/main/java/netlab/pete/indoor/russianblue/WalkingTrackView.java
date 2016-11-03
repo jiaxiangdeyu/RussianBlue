@@ -42,6 +42,7 @@ public class WalkingTrackView extends ImageView {
     private Path m_walkingPath;
     private int m_footColorIndex;
     private PointF m_footLocation;
+    private PointF m_lastLocation;
     private int m_stepNum;
     private WalkingViewHandler m_wvHandler;
 
@@ -180,6 +181,7 @@ public class WalkingTrackView extends ImageView {
         m_wvHandler = new WalkingViewHandler();
         m_footColorIndex = 0;
         m_footLocation = new PointF(0.f, 0.f);
+        m_lastLocation = new PointF(0.f, 0.f);
         m_stepNum = 0;
         m_scale = 1.f;
         setOnTouchListener(new TouchListener());
@@ -190,6 +192,7 @@ public class WalkingTrackView extends ImageView {
         m_walkingPath.moveTo(0.f, 0.f);
         m_footColorIndex = 0;
         m_footLocation = new PointF(0.f, 0.f);
+        m_lastLocation = new PointF(0.f, 0.f);
     }
 
     public void updateWalkingFoot(float x, float y) {
@@ -200,22 +203,24 @@ public class WalkingTrackView extends ImageView {
     }
 
     public void updateWalkingTrack(float x, float y, int num) {
-        x = num * 20;
-        y = num * 20;
-        if (num == 4) {
-            x = 60;
-            y = 60;
-            m_walkingPath.rMoveTo(x,y);
-        }
-        else if (num == 5) {
-            x = 40;
-            y = 40;
-            m_walkingPath.rMoveTo(x, y);
-        }
-        else {
-            m_walkingPath.lineTo(x, y);
-        }
+//        x = num * 20;
+//        y = num * 20;
+//        if (num == 4) {
+//            x = 60;
+//            y = 60;
+//            m_walkingPath.rMoveTo(x,y);
+//        }
+//        else if (num == 5) {
+//            x = 40;
+//            y = 40;
+//            m_walkingPath.rMoveTo(x, y);
+//        }
+//        else {
+//            m_walkingPath.lineTo(x, y);
+//        }
+        m_lastLocation.set(m_footLocation.x, m_footLocation.y);
         m_footLocation.set(x, y);
+        m_walkingPath.quadTo(m_lastLocation.x, m_lastLocation.y, x, y);
         m_stepNum = num;
         invalidate();
     }
